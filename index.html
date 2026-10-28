@@ -150,6 +150,22 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
 #game>.table{display:flex;flex-direction:column;min-width:0}
 #game .result-banner{display:block;position:relative;width:100%;max-width:100%;height:auto;min-height:58px;box-sizing:border-box;margin:9px auto 0;padding:12px 16px;border-radius:12px;background:#153b2c;border:2px solid #b48a35;color:#ffe16b;font-size:clamp(18px,2.1vw,28px);font-weight:900;line-height:1.35;text-align:center;white-space:normal;overflow:visible;overflow-wrap:break-word;word-break:normal;text-overflow:clip;text-shadow:0 1px 2px #000}
 @media(max-width:699px){#game .result-banner{font-size:clamp(17px,4.6vw,24px);min-height:52px;padding:10px 9px}}
+/* Vinnande spelare blinkar exakt tre gånger när given avslutas. */
+@keyframes winnerFlash{0%,100%{filter:brightness(1);box-shadow:0 0 0 2px #ffd84e}50%{filter:brightness(1.7);box-shadow:0 0 0 5px #ffd84e,0 0 28px 12px #ffdc51}}
+.ring-seats .seat.winner{border-color:#ffd84e!important;animation:winnerFlash .8s ease-in-out 3;z-index:6!important}
+.flying-chip{position:fixed;z-index:9999;width:28px;height:28px;border-radius:50%;border:3px dashed #ffe995;background:radial-gradient(circle,#f5c54c,#b47a12);box-shadow:0 2px 9px #0009;color:#4b3000;display:grid;place-items:center;font-size:15px;font-weight:900;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.flying-chip{display:none}}
+/* Mobil: tur och vinnarmeddelande intill de egna korten. */
+.mobile-seat-status{display:none}
+@keyframes turnTwice{0%,100%{box-shadow:0 0 0 2px #ffdc42;filter:brightness(1)}50%{box-shadow:0 0 0 5px #ffdc42,0 0 24px 9px #ffe05b;filter:brightness(1.55)}}
+.ring-seats .seat.turn.turn-flash{animation:turnTwice .65s ease-in-out 2}
+@media(max-width:699px){
+ #game .result-banner{display:none}
+ .ring-seats .seat.self{overflow:visible}
+ .ring-seats .seat.self .mobile-seat-status{display:block;position:absolute;top:calc(100% + 7px);right:-3px;width:min(210px,58vw);padding:8px 9px;border-radius:10px;background:#143b2c;border:2px solid #e8bb48;color:#ffe77d;font-size:clamp(13px,3.7vw,17px);font-weight:900;line-height:1.25;text-align:center;overflow-wrap:anywhere;box-shadow:0 4px 12px #0009;z-index:10}
+ .ring-seats .seat.self .mobile-seat-status:empty{display:none}
+}
+@media(prefers-reduced-motion:reduce){.ring-seats .seat.turn.turn-flash{animation:none}}
 </style></head><body>
 <div id="app">
  <h1>♠ Poker <small id="info"></small></h1>
@@ -175,6 +191,101 @@ const $=id=>document.getElementById(id);
 const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 let role=null; // 'host' | 'client' | null
 let G=null,timer=null,logs=[],raiseTo=0,V=null;
+let animatedWinKey=null, playedWinSoundKey=null, audioCtx=null;
+let lastDealHand=null,lastBoardCount=0,cardSoundTimers=[];
+// Kort, mjukt prassel/snärt för varje utdelat kort. Skapas utan externa ljudfiler.
+function playCardSound(){
+  try{
+    if(!audioCtx||audioCtx.state!=='running')return;
+    const now=audioCtx.currentTime, duration=.085;
+    const buffer=audioCtx.createBuffer(1,Math.ceil(audioCtx.sampleRate*duration),audioCtx.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++){
+      const t=i/data.length;
+      data[i]=(Math.random()*2-1)*Math.pow(1-t,2)*(0.65+0.35*Math.sin(i*.21));
+    }
+    const src=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),gain=audioCtx.createGain();
+    src.buffer=buffer;filter.type='bandpass';filter.frequency.value=1700;filter.Q.value=.7;
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.linearRampToValueAtTime(.22,now+.008);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    src.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);
+    src.start(now);src.stop(now+duration);
+  }catch(_){}
+}
+function soundDealtCards(v){
+  if(!v.hand)return;
+  let n=0;
+  if(lastDealHand!==v.hand){
+    lastDealHand=v.hand;
+    lastBoardCount=0;
+    cardSoundTimers.forEach(clearTimeout);cardSoundTimers=[];
+    // Två kort per aktiv spelare, ett kortljud för varje kort.
+    n=v.players.filter(p=>!p.out).length*2;
+  }
+  const boardCount=v.board.filter(Boolean).length;
+  if(boardCount>lastBoardCount)n+=boardCount-lastBoardCount;
+  lastBoardCount=boardCount;
+  if(n>0){
+    cardSoundTimers.forEach(clearTimeout);cardSoundTimers=[];
+    const start=0;
+    for(let i=0;i<n;i++)cardSoundTimers.push(setTimeout(playCardSound,start+i*115));
+  }
+}
+
+// Ljud av pokermarker som rasslar och klapprar mot varandra (inte myntklirr).
+function unlockAudio(){
+  try{
+    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+  }catch(_){}
+}
+document.addEventListener('pointerdown',unlockAudio,{passive:true});
+document.addEventListener('keydown',unlockAudio);
+function playWinSound(v){
+  if(!v.over||!v.winners?.length)return;
+  const key=`${role}-${v.hand}-${v.winners.join('-')}`;
+  if(playedWinSoundKey===key)return;
+  playedWinSoundKey=key;
+  try{
+    if(!audioCtx||audioCtx.state!=='running')return;
+    const ctx=audioCtx,now=ctx.currentTime;
+    // En skur av torra, dämpade plast-/lerklickar som tätnar och klingar av.
+    // Inga höga sinus-toner: sådana låter som metallmynt.
+    for(let i=0;i<46;i++){
+      const progress=i/46;
+      const at=now+i*.021+Math.random()*.024;
+      const length=.016+Math.random()*.024;
+      const buffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*length),ctx.sampleRate);
+      const samples=buffer.getChannelData(0);
+      for(let j=0;j<samples.length;j++){
+        const t=j/samples.length;
+        samples[j]=(Math.random()*2-1)*Math.exp(-t*(8+Math.random()*2));
+      }
+      const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+      src.buffer=buffer;
+      filter.type='bandpass';
+      filter.frequency.value=550+Math.random()*950;
+      filter.Q.value=.6+Math.random()*.8;
+      const vol=(.13+Math.random()*.11)*(1-progress*.65);
+      gain.gain.setValueAtTime(vol,at);
+      gain.gain.exponentialRampToValueAtTime(.0001,at+length);
+      src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+      src.start(at);src.stop(at+length);
+      // Lågfrekvent, kort knack från marker som slår i varandra.
+      if(i%3===0){
+        const osc=ctx.createOscillator(),og=ctx.createGain();
+        osc.type='triangle';
+        osc.frequency.setValueAtTime(240+Math.random()*220,at);
+        osc.frequency.exponentialRampToValueAtTime(140+Math.random()*100,at+.025);
+        og.gain.setValueAtTime(.045*(1-progress*.7),at);
+        og.gain.exponentialRampToValueAtTime(.0001,at+.035);
+        osc.connect(og);og.connect(ctx.destination);
+        osc.start(at);osc.stop(at+.037);
+      }
+    }
+  }catch(_){}
+}
 let friends=[],hostName='Du',botCount=2;
 let cl={pc:null,dc:null,state:'',name:'',room:'',err:''};
 
@@ -214,11 +325,11 @@ function mkPlayer(o){return {stack:START,bet:0,total:0,cards:[],folded:false,all
 function startMatch(){
   const ps=[mkPlayer({name:hostName||'Du',local:true})];
   friends.filter(f=>f.ok).forEach(f=>{const p=mkPlayer({name:f.name,fr:f});f.p=p;ps.push(p)});
-  const bn=[['Lisa',.5],['Max',.85]];
+  const bn=[['Arne',.5],['Tobbe',.85],['Göran',.65],['Henrik',.75],['Lennart',.45],['Jonas',.9]];
   for(let i=0;i<botCount;i++)ps.push(mkPlayer({name:bn[i][0],bot:true,agg:bn[i][1]}));
   if(ps.length<2)return;
   logs=[];
-  G={players:ps,board:[],deck:[],dealer:ps.length-1,phase:'idle',toAct:null,currentBet:0,minRaise:BB,over:true,runout:false,reveal:false,hand:0,matchOver:false,msg:''};
+  G={players:ps,board:[],deck:[],dealer:ps.length-1,phase:'idle',toAct:null,currentBet:0,minRaise:BB,over:true,runout:false,reveal:false,hand:0,matchOver:false,msg:'',winners:[]};
   showGame();startHand();
 }
 function startHand(){
@@ -226,7 +337,7 @@ function startHand(){
   const P=G.players;
   P.forEach(p=>{p.out=p.stack<=0||p.gone;p.bet=0;p.total=0;p.cards=[];p.folded=p.out;p.allIn=false;p.acted=false;p.last=''});
   if(P.filter(p=>!p.out).length<2){G.matchOver=true;G.over=true;G.msg='Matchen är slut.';render();return}
-  G.hand++;G.over=false;G.reveal=false;G.runout=false;G.board=[];G.phase='preflop';
+  G.winners=[];G.winPot=0;G.hand++;G.over=false;G.reveal=false;G.runout=false;G.board=[];G.phase='preflop';
   const d=[];for(let s=0;s<4;s++)for(let r=2;r<=14;r++)d.push({r,s});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}
   G.deck=d;
@@ -305,9 +416,11 @@ function finish(){
     prev=L;
   });
   P.forEach((p,i)=>{p.stack+=won[i]});
+  G.winners=won.map((amount,i)=>amount>0?i:-1).filter(i=>i>=0);
+  G.winPot=won.reduce((a,b)=>a+b,0);
   P.forEach((p,i)=>{if(won[i]>0){
-    const how=showdown?` med ${HN[catOf(sc(p))]}`:'';
-    lines.push(`${p.name} vinner ${won[i]}${how}`);log(`🏆 ${p.name} vinner ${won[i]}${how}.`)}});
+    const how=showdown?` med ${HN[catOf(sc(p))].toLowerCase()}`:'';
+    lines.push(`${p.name} vinner${how} (${won[i]} marker)`);log(`🏆 ${p.name} vinner${how} (${won[i]} marker).`)}});
   G.msg=lines.join(' · ');
   G.over=true;G.phase='ended';G.toAct=null;
   P.forEach(p=>{p.total=0});
@@ -354,7 +467,7 @@ function bot(i){
 /* ---------- vy per spelare ---------- */
 function view(i){
   const P=G.players,me=P[i],max=me.stack+me.bet;
-  return {hand:G.hand,board:G.board,pot:pot(),msg:G.msg,over:G.over,matchOver:G.matchOver,toAct:G.toAct,you:i,
+  return {hand:G.hand,board:G.board,pot:G.over&&G.winPot?G.winPot:pot(),msg:G.msg,winners:G.winners||[],over:G.over,matchOver:G.matchOver,toAct:G.toAct,you:i,
     dealer:G.dealer,sb:G.sb,bb:G.bb,currentBet:G.currentBet,toCall:Math.min(G.currentBet-me.bet,me.stack),
     minTo:Math.min(minTo(),max,G.currentBet+MAXR),maxTo:Math.min(max,G.currentBet+MAXR),canRaise:max>G.currentBet,
     who:G.toAct!=null&&P[G.toAct]?P[G.toAct].name:'',logs:logs.slice(-12),
@@ -384,10 +497,11 @@ const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function badges(i,v){return (v.hand?(i===v.dealer?'<span class="badge">D</span>':'')+(i===v.sb&&!v.players[i].out?'<span class="badge">SB</span>':'')+(i===v.bb&&!v.players[i].out?'<span class="badge">BB</span>':''):'')}
 function seat(i,v){
   const p=v.players[i];
-  return `<div class="seat ${v.toAct===i&&!v.over?'turn':''} ${p.folded&&!p.out?'fold':''} ${p.out?'out':''}">
+  return `<div data-player="${i}" class="seat ${v.over&&v.winners?.includes(i)?'winner':''} ${v.toAct===i&&!v.over?'turn turn-flash':''} ${p.folded&&!p.out?'fold':''} ${p.out?'out':''}">
    <div class="nm">${esc(p.name)}${badges(i,v)}</div><div class="st">${p.out?'Ute':p.stack+' marker'}</div>
    <div class="cards">${p.out?'':p.cards.map(cardEl).join('')}</div>
-   ${v.over?'':chips(p.bet)}<div class="act">${v.over?'':(p.bet?'Insats '+p.bet:'')+(p.bet&&p.last?' · ':'')+p.last}</div></div>`;
+   ${v.over?'':chips(p.bet)}<div class="act">${v.over?'':(p.bet?'Insats '+p.bet:'')+(p.bet&&p.last?' · ':'')+p.last}</div>
+   ${i===v.you?`<div class="mobile-seat-status" aria-live="polite">${esc(v.msg||(v.toAct===v.you&&!v.over?'Din tur':(!v.over&&v.who?v.who+'s tur':'')))}</div>`:''}</div>`;
 }
 function render(){
   if(role==='host'){V=view(0);sync()}
@@ -429,6 +543,43 @@ function render(){
     }
   }else c.innerHTML='<div class="row"><button disabled>Väntar…</button></div>';
   $('log').innerHTML=v.logs.slice().reverse().map(t=>`<div>${esc(t)}</div>`).join('');
+  soundDealtCards(v);
+  playWinSound(v);
+  animateWinningChips(v);
+}
+function animateWinningChips(v){
+  if(!v.over||!v.winners?.length||!v.pot)return;
+  const key=`${role}-${v.hand}-${v.winners.join('-')}`;
+  if(animatedWinKey===key)return;
+  animatedWinKey=key;
+  requestAnimationFrame(()=>{
+    const source=$('pot');
+    if(!source)return;
+    const a=source.getBoundingClientRect();
+    const sx=a.left+a.width/2,sy=a.top+a.height/2;
+    v.winners.forEach((winner,wi)=>{
+      const seat=$('bots').querySelector(`[data-player="${winner}"]`);
+      if(!seat)return;
+      const b=seat.getBoundingClientRect();
+      const tx=b.left+b.width/2,ty=b.top+b.height/2;
+      for(let j=0;j<7;j++){
+        const chip=document.createElement('span');
+        chip.className='flying-chip';
+        chip.textContent=['♠','★','♣','♦'][j%4];
+        chip.style.left=`${sx-14}px`;
+        chip.style.top=`${sy-14}px`;
+        document.body.appendChild(chip);
+        const dx=tx-sx+(j-3)*5,dy=ty-sy+(j%3-1)*7;
+        const animation=chip.animate([
+          {transform:'translate(0,0) scale(.65)',opacity:0},
+          {transform:'translate(0,0) scale(1)',opacity:1,offset:.12},
+          {transform:`translate(${dx}px,${dy}px) scale(.7)`,opacity:1,offset:.85},
+          {transform:`translate(${dx}px,${dy}px) scale(.3)`,opacity:0}
+        ],{duration:1150,delay:wi*160+j*115,easing:'ease-in-out',fill:'forwards'});
+        animation.onfinish=()=>chip.remove();
+      }
+    });
+  });
 }
 function doAct(type,to){
   raiseTo=0;
@@ -514,7 +665,7 @@ function lobby(){
      <div>Vid bordet:</div><div class="pl"><span id="hostPlayerName">${esc(hostName||'Du')} (värd)</span></div>
      ${friends.map(f=>`<div class="pl"><span>${esc(f.name)}</span><span>${f.ok?'✓ ansluten':'ansluter…'}</span></div>`).join('')}
      <div>Bottar:</div>
-     <select id="bc"><option value="0">Inga bottar</option><option value="1">1 bot (Lisa)</option><option value="2">2 bottar (Lisa, Max)</option></select>
+     <select id="bc">${Array.from({length:7},(_,n)=>`<option value="${n}">${n===0?'Inga bottar':n+' bottar ('+['Arne','Tobbe','Göran','Henrik','Lennart','Jonas'].slice(0,n).join(', ')+')'}</option>`).join('')}</select>
      <button class="big" id="start" ${total<2?'disabled':''}>Starta spelet (${total} spelare)</button>
      <div class="hint">Vännerna öppnar samma fil och väljer <i>Gå med med rumskod</i>. Håll den här sidan öppen och skärmen vaken under spelet. Nya spelare kan inte gå med efter start.</div>`;
     $('hn').oninput=e=>{hostName=e.target.value.trim().slice(0,14)||'Du';const label=L.querySelector('#hostPlayerName');if(label)label.textContent=hostName+' (värd)'};

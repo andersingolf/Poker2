@@ -146,6 +146,10 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
   .game-sidebar{margin-top:8px}
   .ring-seats .seat.self{z-index:4}
 }
+/* Resultat visas under bordet, i full bredd, utan att klippas av ovalen. */
+#game>.table{display:flex;flex-direction:column;min-width:0}
+#game .result-banner{display:block;position:relative;width:100%;max-width:100%;height:auto;min-height:58px;box-sizing:border-box;margin:9px auto 0;padding:12px 16px;border-radius:12px;background:#153b2c;border:2px solid #b48a35;color:#ffe16b;font-size:clamp(18px,2.1vw,28px);font-weight:900;line-height:1.35;text-align:center;white-space:normal;overflow:visible;overflow-wrap:break-word;word-break:normal;text-overflow:clip;text-shadow:0 1px 2px #000}
+@media(max-width:699px){#game .result-banner{font-size:clamp(17px,4.6vw,24px);min-height:52px;padding:10px 9px}}
 </style></head><body>
 <div id="app">
  <h1>♠ Poker <small id="info"></small></h1>
@@ -154,9 +158,9 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
   <div class="table">
    <div class="poker-ring" id="ring">
     <div class="ring-seats" id="bots"></div>
-    <div class="ring-center"><div class="board" id="board"></div><div class="pot" id="pot"></div><div class="msg" id="msg"></div></div>
+    <div class="ring-center"><div class="board" id="board"></div><div class="pot" id="pot"></div></div>
    </div>
-
+   <div class="result-banner msg" id="msg" aria-live="polite"></div>
   </div>
   <aside class="game-sidebar"><div class="ctl" id="ctl"></div><div class="log" id="log"></div></aside>
  </div>

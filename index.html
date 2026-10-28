@@ -166,7 +166,11 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
  .ring-seats .seat.self .mobile-seat-status:empty{display:none}
 }
 @media(prefers-reduced-motion:reduce){.ring-seats .seat.turn.turn-flash{animation:none}}
+#soundToggle{position:fixed;right:12px;top:10px;z-index:1000;background:#14643d;border:2px solid #ffe07a;color:white;border-radius:12px;padding:8px 12px;font-size:14px;min-height:40px;box-shadow:0 2px 9px #0009}
+#soundToggle.sound-on{background:#235b41;border-color:#64d8a0}
+@media(max-width:699px){#soundToggle{top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:10px}}
 </style></head><body>
+<button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
  <h1>♠ Poker <small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
@@ -236,12 +240,37 @@ function soundDealtCards(v){
 // Ljud av pokermarker som rasslar och klapprar mot varandra (inte myntklirr).
 function unlockAudio(){
   try{
-    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
-    if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
-  }catch(_){}
+    const AudioClass=window.AudioContext||window.webkitAudioContext;
+    if(!AudioClass)return Promise.reject(new Error('Ljud stöds inte'));
+    audioCtx ||= new AudioClass();
+    // Måste anropas direkt under en användargest på iOS Safari.
+    const result=audioCtx.state==='running'?Promise.resolve():audioCtx.resume();
+    return Promise.resolve(result).then(()=>{
+      if(audioCtx.state!=='running')throw new Error('Ljudet är blockerat');
+      const b=$('soundToggle');
+      if(b){b.textContent='🔊 Ljud på · testa';b.classList.add('sound-on')}
+    });
+  }catch(e){return Promise.reject(e)}
 }
-document.addEventListener('pointerdown',unlockAudio,{passive:true});
-document.addEventListener('keydown',unlockAudio);
+function testChipSound(){
+  const now=audioCtx.currentTime;
+  for(let i=0;i<12;i++){
+    const at=now+i*.035;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='triangle';o.frequency.setValueAtTime(420+(i%4)*75,at);
+    o.frequency.exponentialRampToValueAtTime(160,at+.028);
+    g.gain.setValueAtTime(.11,at);g.gain.exponentialRampToValueAtTime(.0001,at+.035);
+    o.connect(g);g.connect(audioCtx.destination);o.start(at);o.stop(at+.04);
+  }
+}
+$('soundToggle').addEventListener('click',()=>{
+  unlockAudio().then(testChipSound).catch(()=>{
+    $('soundToggle').textContent='🔇 Tryck för ljud';
+    alert('Ljudet kunde inte startas. Kontrollera iPhones volym och att sidan inte är tystad.');
+  });
+});
+document.addEventListener('pointerdown',()=>{unlockAudio().catch(()=>{})},{passive:true});
+document.addEventListener('keydown',()=>{unlockAudio().catch(()=>{})});
 function playWinSound(v){
   if(!v.over||!v.winners?.length)return;
   const key=`${role}-${v.hand}-${v.winners.join('-')}`;

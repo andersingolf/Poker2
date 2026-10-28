@@ -12,9 +12,9 @@ h1 small{font-weight:400;opacity:.7}
 .table{background:radial-gradient(ellipse at center,#1d6b47,#124a31);border:3px solid #0a3524;border-radius:24px;padding:12px;display:flex;flex-direction:column;gap:12px}
 .bots{display:flex;gap:8px}
 .seat{flex:1;background:rgba(0,0,0,.28);border:2px solid transparent;border-radius:14px;padding:8px;text-align:center;min-height:98px}
-.seat.turn{border-color:#ffd54a;box-shadow:0 0 12px #ffd54a88}
+.seat .nm{display:block;background:#f5d46a;color:#15291e;border-radius:7px;padding:5px 3px;font-size:14px;font-weight:900;min-height:28px;line-height:18px;overflow-wrap:anywhere}.seat.turn{border-color:#ffd54a;box-shadow:0 0 12px #ffd54a88}
 .seat.fold{opacity:.45}.seat.out{opacity:.3}
-.nm{font-weight:700;font-size:14px}.st{font-size:13px;opacity:.9}
+.nm{font-weight:800;font-size:15px;color:#fff;overflow-wrap:anywhere}.me .nm{font-size:19px;color:#ffd54a}.st{font-size:13px;opacity:.9}
 .badge{display:inline-block;font-size:10px;font-weight:700;background:#fff;color:#111;border-radius:9px;padding:0 5px;margin-left:3px}
 .act{font-size:12px;color:#ffd54a;min-height:16px}
 .cards{display:flex;gap:4px;justify-content:center;margin:4px 0}
@@ -38,7 +38,7 @@ button:disabled{opacity:.35}
 input[type=range]{width:100%;accent-color:#ffd54a}
 .log{background:#0a1f17;border-radius:12px;padding:8px 10px;font-size:12.5px;line-height:1.5;opacity:.85;max-height:140px;overflow:auto}
 
-.bots{flex-wrap:wrap}.seat{min-width:30%}
+.bots{flex-wrap:wrap}.seat{min-width:30%}.opponents{font-size:13px;font-weight:700;text-align:center;color:#fff;background:#0c3828;border-radius:9px;padding:7px 5px;line-height:1.5}
 .panel{background:#0a1f17;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .panel h2{margin:0;font-size:16px}
 textarea,input[type=text],select{width:100%;border-radius:10px;border:1px solid #3a5a4a;background:#12372a;color:#fff;padding:10px;font-size:14px}
@@ -49,27 +49,38 @@ textarea{height:84px;font-family:monospace;font-size:11px}
 .chips{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;min-height:22px;margin:2px 0}
 .chip{min-width:26px;height:22px;border-radius:11px;border:2px dashed #fff9;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 1px 2px #0008}
 .chW{background:#f2f2f2;color:#222}.chR{background:#d32f2f;color:#fff}.chB{background:#1f5fd6;color:#fff}.chG{background:#1b9a4a;color:#fff}.chK{background:#1a1a1a;color:#fff}
+
+/* Alla klienter använder samma absoluta platsordning. Index ökar medurs. */
+.poker-ring{position:relative;width:100%;height:410px;border-radius:50% / 44%;border:5px solid #092c1e;background:radial-gradient(ellipse,#237b50,#125135 73%,#0b3927);box-shadow:inset 0 0 20px #0007;overflow:hidden}
+.ring-seats{position:absolute;inset:0}
+.ring-seats .seat{position:absolute;transform:translate(-50%,-50%);width:104px;min-width:0;min-height:0;padding:4px 2px;border-radius:10px;background:#092b22ed;z-index:2}
+.ring-seats .seat .nm{font-size:11px;line-height:14px;min-height:20px;padding:3px 1px}
+.ring-seats .seat .st{font-size:10px}
+.ring-seats .seat .card{width:22px;height:30px;font-size:11px}
+.ring-seats .seat .cards{margin:2px 0}
+.ring-seats .seat .act{font-size:9px;min-height:10px}
+.ring-seats .seat .chips{min-height:0}
+.ring-seats .seat .chip{height:15px;min-width:19px;font-size:9px;padding:0 2px}
+.ring-seats .seat.self{border-color:#76dfff}
+.ring-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70%;text-align:center;pointer-events:none}
+.ring-center .board .card{width:32px;height:45px;font-size:15px}
+.ring-center .pot{font-size:12px}
+.ring-center .pot b{font-size:15px}
+.ring-center .chips{min-height:0}
+.ring-center .msg{font-size:11px;min-height:0}
+@media(max-width:390px){.poker-ring{height:365px}.ring-seats .seat{width:90px}.ring-center .board .card{width:28px;height:39px;font-size:13px}}
+@media(max-width:390px){#app{padding:8px 7px 28px}.table{padding:8px;gap:9px}.bots{gap:5px}.seat{padding:5px;min-width:29%;min-height:90px}.board .card{width:39px;height:56px}.mine .card{width:50px;height:70px}button{min-height:48px}input,select,textarea{font-size:16px}}
+@supports(padding:env(safe-area-inset-bottom)){#app{padding-bottom:calc(24px + env(safe-area-inset-bottom))}}
 </style></head><body>
-<div id="app">
- <h1>♠ Poker mot bottar <small id="info"></small></h1>
- <div class="table">
-  <div class="bots" id="bots"></div>
-  <div><div class="board" id="board"></div><div class="pot" id="pot"></div></div>
-  <div class="msg" id="msg"></div>
-  <div class="me" id="me"></div>
- </div>
- <div class="ctl" id="ctl"></div>
- <div class="log" id="log"></div>
-</div>
-<body>
 <div id="app">
  <h1>♠ Poker <small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
-   <div class="bots" id="bots"></div>
-   <div><div class="board" id="board"></div><div class="pot" id="pot"></div></div>
-   <div class="msg" id="msg"></div>
+   <div class="poker-ring" id="ring">
+    <div class="ring-seats" id="bots"></div>
+    <div class="ring-center"><div class="board" id="board"></div><div class="pot" id="pot"></div><div class="msg" id="msg"></div></div>
+   </div>
    <div class="me" id="me"></div>
   </div>
   <div class="ctl" id="ctl" style="margin-top:10px"></div>
@@ -218,7 +229,7 @@ function finish(){
   P.forEach((p,i)=>{p.stack+=won[i]});
   P.forEach((p,i)=>{if(won[i]>0){
     const how=showdown?` med ${HN[catOf(sc(p))]}`:'';
-    lines.push(`${p.name} vinner ${won[i]}${how}`);log(`🏆 ${p.name} vinner ${won[i]}${how}.`)} });
+    lines.push(`${p.name} vinner ${won[i]}${how}`);log(`🏆 ${p.name} vinner ${won[i]}${how}.`)}});
   G.msg=lines.join(' · ');
   G.over=true;G.phase='ended';G.toAct=null;
   P.forEach(p=>{p.total=0});
@@ -291,7 +302,7 @@ function cardEl(c){
 }
 const DEN=[[30,'K'],[10,'G'],[5,'B'],[2,'R'],[1,'W']];
 function chips(n){n=Math.round(n)||0;if(n<=0)return '<div class="chips"></div>';let h='';for(const [d,c] of DEN){const k=Math.floor(n/d);n-=k*d;if(k)h+=`<span class="chip ch${c}" title="${d}">${k>1?k+'×':''}${d}</span>`}return '<div class="chips">'+h+'</div>'}
-const esc=t=>String(t).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function badges(i,v){return (v.hand?(i===v.dealer?'<span class="badge">D</span>':'')+(i===v.sb&&!v.players[i].out?'<span class="badge">SB</span>':'')+(i===v.bb&&!v.players[i].out?'<span class="badge">BB</span>':''):'')}
 function seat(i,v){
   const p=v.players[i];
@@ -304,14 +315,20 @@ function render(){
   if(role==='host'){V=view(0);sync()}
   const v=V;if(!v)return;
   const me=v.players[v.you],isHost=role==='host';
-  $('info').textContent=`Giv ${v.hand}`;
-  $('bots').innerHTML=v.players.map((_,i)=>i===v.you?'':seat(i,v)).join('');
+  $('info').textContent=`${me.name} · Giv ${v.hand}`;
+  // Samma fasta plats för varje spelare på alla telefoner. Medurs: 0,1,2,...
+  const count=v.players.length;
+  $('bots').innerHTML=v.players.map((_,i)=>{
+    const a=(90+i*360/count)*Math.PI/180;
+    const x=50+37*Math.cos(a), y=50+39*Math.sin(a);
+    return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
+  }).join('');
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');
   $('pot').innerHTML=`Pott <b>${v.pot}</b>`+chips(v.pot);
   const myTurn=v.toAct===v.you&&!v.over&&!me.folded;
-  $('msg').textContent=v.msg||(myTurn?'Din tur':(v.over?'':'${v.who} tänker…'));
+  $('msg').textContent=v.msg||(myTurn?'Din tur':(v.over?'':`${v.who} tänker…`));
   $('me').className='me mine'+(myTurn?' turn':'');
-  $('me').innerHTML=`<div class="nm">${esc(me.name)}${badges(v.you,v)}</div><div class="st">${me.stack} marker${me.bet&&!v.over?' · insats '+me.bet:''}${me.last&&!v.over?' · '+me.last:''}</div><div class="cards">${me.out?'':me.cards.map(cardEl).join('')}</div>${v.over?'':chips(me.bet)}${me.folded&&!me.out&&!v.over?'<div class="act">Du har lagt ner</div>':''}`;
+  $('me').innerHTML=`<div class="nm">Du spelar som: ${esc(me.name)}${badges(v.you,v)}</div><div class="st">${me.stack} marker${me.bet&&!v.over?' · insats '+me.bet:''}${me.last&&!v.over?' · '+me.last:''}</div><div class="cards">${me.out?'':me.cards.map(cardEl).join('')}</div>${v.over?'':chips(me.bet)}${me.folded&&!me.out&&!v.over?'<div class="act">Du har lagt ner</div>':''}`;
   const c=$('ctl');
   if(v.over){
     c.innerHTML=isHost?`<div class="row"><button class="big" id="deal">${v.matchOver?'Tillbaka till lobbyn':'Dela ut nästa giv nu'}</button></div>`:
@@ -356,7 +373,7 @@ const pubMsg=(topic,obj)=>fetch(T(topic),{method:'POST',body:JSON.stringify(obj)
 function subMsg(topic,cb,onopen){
   const e=new EventSource(T(topic)+'/sse');
   e.onopen=()=>onopen&&onopen();
-  e.onmessage=ev=>{try{const d=JSON.parse(ev.data);if(d.event==='message')cb(JSON.parse(d.message))}catch(_){} };
+  e.onmessage=ev=>{try{const d=JSON.parse(ev.data);if(d.event==='message')cb(JSON.parse(d.message))}catch(_){}};
   return e;
 }
 const mkId=n=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:n},()=>a[Math.floor(Math.random()*a.length)]).join('')};
@@ -417,14 +434,14 @@ function lobby(){
     L.innerHTML=`<h2>Ditt bord</h2>
      <div style="text-align:center"><div class="hint">Rumskod – ge den till dina vänner</div>
       <div style="font-size:42px;font-weight:800;letter-spacing:6px;color:#ffd54a">${room}</div></div>
-     <input type="text" id="hn" maxlength="14" placeholder="Ditt smeknamn" value="${esc(hostName==='Du'?'':hostName)}">
-     <div>Vid bordet:</div><div class="pl"><span>${esc(hostName||'Du')} (värd)</span></div>
+     <label for="hn">Ditt spelarnamn (värd)</label><input type="text" id="hn" maxlength="14" placeholder="Skriv ditt namn" value="${esc(hostName==='Du'?'':hostName)}">
+     <div>Vid bordet:</div><div class="pl"><span id="hostPlayerName">${esc(hostName||'Du')} (värd)</span></div>
      ${friends.map(f=>`<div class="pl"><span>${esc(f.name)}</span><span>${f.ok?'✓ ansluten':'ansluter…'}</span></div>`).join('')}
      <div>Bottar:</div>
      <select id="bc"><option value="0">Inga bottar</option><option value="1">1 bot (Lisa)</option><option value="2">2 bottar (Lisa, Max)</option></select>
      <button class="big" id="start" ${total<2?'disabled':''}>Starta spelet (${total} spelare)</button>
      <div class="hint">Vännerna öppnar samma fil och väljer <i>Gå med med rumskod</i>. Håll den här sidan öppen och skärmen vaken under spelet. Nya spelare kan inte gå med efter start.</div>`;
-    $('hn').oninput=e=>{hostName=e.target.value.trim().slice(0,14)||'Du'};
+    $('hn').oninput=e=>{hostName=e.target.value.trim().slice(0,14)||'Du';const label=L.querySelector('#hostPlayerName');if(label)label.textContent=hostName+' (värd)'};
     $('hn').onchange=sync;
     $('bc').value=String(botCount);$('bc').onchange=e=>{botCount=+e.target.value;lobby()};
     $('start').onclick=startMatch;
@@ -436,7 +453,7 @@ function lobby(){
   }else if(cl.state==='connecting'){
     h+=`<div>Ansluter till bord ${esc(cl.room)}…</div>`;
   }else{
-    h+=`<input type="text" id="cn" maxlength="14" placeholder="Ditt smeknamn" value="${esc(cl.name)}">
+    h+=`<label for="cn">Ditt spelarnamn</label><input type="text" id="cn" maxlength="14" placeholder="Skriv ditt namn" value="${esc(cl.name)}">
      <input type="text" id="rc" maxlength="5" placeholder="Rumskod (5 tecken)" value="${esc(cl.room||'')}" style="margin-top:6px;text-transform:uppercase;letter-spacing:4px">
      <button class="big" id="mk">Gå med</button><div class="hint">${esc(cl.err||'')}</div>`;
   }

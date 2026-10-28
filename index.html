@@ -197,6 +197,7 @@ let role=null; // 'host' | 'client' | null
 let G=null,timer=null,logs=[],raiseTo=0,V=null;
 let animatedWinKey=null, playedWinSoundKey=null, audioCtx=null;
 let lastDealHand=null,lastBoardCount=0,cardSoundTimers=[];
+let lastActionHand=null,lastActionLogCount=0;
 // Kort, mjukt prassel/snärt för varje utdelat kort. Skapas utan externa ljudfiler.
 function playCardSound(){
   try{
@@ -216,6 +217,62 @@ function playCardSound(){
     src.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);
     src.start(now);src.stop(now+duration);
   }catch(_){}
+}
+// Kort, dovt bordsslag när någon checkar.
+function playFoldBang(){
+  try{
+    if(!audioCtx||audioCtx.state!=='running')return;
+    const ctx=audioCtx,at=ctx.currentTime,dur=.22;
+    const osc=ctx.createOscillator(),low=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(145,at);
+    osc.frequency.exponentialRampToValueAtTime(48,at+.16);
+    low.gain.setValueAtTime(.0001,at);
+    low.gain.linearRampToValueAtTime(.38,at+.008);
+    low.gain.exponentialRampToValueAtTime(.0001,at+dur);
+    osc.connect(low);low.connect(ctx.destination);
+    osc.start(at);osc.stop(at+dur);
+    const buffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*.075),ctx.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/data.length*11);
+    const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),g=ctx.createGain();
+    src.buffer=buffer;filter.type='lowpass';filter.frequency.value=800;
+    g.gain.setValueAtTime(.3,at);g.gain.exponentialRampToValueAtTime(.0001,at+.075);
+    src.connect(filter);filter.connect(g);g.connect(ctx.destination);
+    src.start(at);src.stop(at+.075);
+  }catch(_){}
+}
+// Mjukt, fallande "ooh, no!"-liknande syntetiskt ljud när någon lägger sig.
+function playFoldOohNo(){
+  try{
+    if(!audioCtx||audioCtx.state!=='running')return;
+    const ctx=audioCtx,now=ctx.currentTime;
+    [[0,.23,410,265],[.23,.35,330,150]].forEach(([offset,duration,from,to],i)=>{
+      const at=now+offset,osc=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(from,at);
+      osc.frequency.exponentialRampToValueAtTime(to,at+duration);
+      filter.type='lowpass';filter.frequency.setValueAtTime(850,at);
+      filter.frequency.exponentialRampToValueAtTime(430,at+duration);
+      gain.gain.setValueAtTime(.0001,at);
+      gain.gain.linearRampToValueAtTime(i?.09:.12,at+.035);
+      gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+      osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+      osc.start(at);osc.stop(at+duration);
+    });
+  }catch(_){}
+}
+function soundActions(v){
+  if(lastActionHand!==v.hand){lastActionHand=v.hand;lastActionLogCount=0;}
+  const entries=v.logs||[];
+  if(entries.length>lastActionLogCount){
+    const fresh=entries.slice(lastActionLogCount);
+    fresh.forEach(line=>{
+      if(/lägger ner\./i.test(line))playFoldOohNo();
+      else if(/checkar\./i.test(line))playFoldBang();
+    });
+  }
+  lastActionLogCount=entries.length;
 }
 function soundDealtCards(v){
   if(!v.hand)return;
@@ -573,6 +630,7 @@ function render(){
   }else c.innerHTML='<div class="row"><button disabled>Väntar…</button></div>';
   $('log').innerHTML=v.logs.slice().reverse().map(t=>`<div>${esc(t)}</div>`).join('');
   soundDealtCards(v);
+  soundActions(v);
   playWinSound(v);
   animateWinningChips(v);
 }

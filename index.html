@@ -71,6 +71,73 @@ textarea{height:84px;font-family:monospace;font-size:11px}
 @media(max-width:390px){.poker-ring{height:365px}.ring-seats .seat{width:90px}.ring-center .board .card{width:28px;height:39px;font-size:13px}}
 @media(max-width:390px){#app{padding:8px 7px 28px}.table{padding:8px;gap:9px}.bots{gap:5px}.seat{padding:5px;min-width:29%;min-height:90px}.board .card{width:39px;height:56px}.mine .card{width:50px;height:70px}button{min-height:48px}input,select,textarea{font-size:16px}}
 @supports(padding:env(safe-area-inset-bottom)){#app{padding-bottom:calc(24px + env(safe-area-inset-bottom))}}
+
+/* Kontrastrik mobilvy inspirerad av pokerbordets nya utseende. */
+body{background:#071b14}
+#app{max-width:760px;padding:8px 8px 24px;gap:7px}
+h1{font-size:18px;opacity:1}
+.table{padding:6px;background:transparent;border:0;gap:8px}
+.poker-ring{height:clamp(390px,105vw,600px);border:9px solid #593019;border-radius:48% / 43%;background:radial-gradient(ellipse at center,#087443 0%,#07552f 65%,#05371f 100%);box-shadow:inset 0 0 0 4px #a36b32,inset 0 0 25px #0009,0 5px 18px #0009;overflow:visible}
+.ring-seats .seat{width:clamp(90px,25vw,138px);padding:5px 3px;border-radius:12px;border:2px solid #64756f;background:#061b17f5;box-shadow:0 2px 7px #0008}
+.ring-seats .seat .nm{background:transparent;color:#fff;font-size:clamp(12px,3.5vw,17px);line-height:1.2;min-height:0;padding:1px 0;font-weight:900}
+.ring-seats .seat .st{font-size:clamp(11px,2.9vw,14px);font-weight:800;color:#ffe077;opacity:1}
+.ring-seats .seat .card{width:clamp(29px,8vw,43px);height:clamp(42px,11vw,59px);font-size:clamp(15px,4.4vw,23px)}
+.ring-seats .seat .cards{gap:3px;margin:4px 0}
+.ring-seats .seat .act{font-size:11px;line-height:1.2;min-height:0}
+.ring-seats .seat .chips{display:none}
+.ring-seats .seat.turn{border-color:#ffdc42;box-shadow:0 0 0 2px #ffdc42,0 0 14px #ffdc42aa}
+.ring-seats .seat.self{border-color:#23aaff;box-shadow:0 0 0 2px #23aaff}
+.ring-center{width:76%;background:#052d20bb;border-radius:24px;padding:7px 2px}
+.ring-center .board{gap:3px}
+.ring-center .board .card{width:clamp(30px,9vw,58px);height:clamp(47px,13vw,78px);font-size:clamp(18px,5vw,29px)}
+.ring-center .pot{font-size:15px;font-weight:800}.ring-center .pot b{font-size:22px}
+.ring-center .msg{font-size:12px;line-height:1.3;margin-top:4px}
+.card{border:1px solid #d6d6d6;box-shadow:0 2px 5px #0008;font-weight:900}
+.card.back{background:repeating-linear-gradient(45deg,#1354b4 0 4px,#2f87e5 4px 6px,#1354b4 6px 10px);border:3px solid #f8f8f8}
+.me{background:#061c18;border:3px solid #158ff1;border-radius:14px;padding:7px}
+.me .nm{font-size:18px}.mine .card{width:clamp(64px,19vw,90px);height:clamp(88px,26vw,120px);font-size:clamp(31px,9vw,45px)}
+button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#bf1725}.c{background:#075dc6}.r2{background:#078d4c}
+@media(max-width:390px){.poker-ring{height:390px}.ring-seats .seat{width:91px}.ring-center .board .card{width:29px;height:43px;font-size:17px}}
+/* Tydlig pott och vinnare, utan separat ruta för egna kort. */
+.ring-center .pot{font-size:clamp(19px,5vw,28px);font-weight:900;line-height:1.2;color:#fff}
+.ring-center .pot b{font-size:clamp(28px,8vw,43px);color:#ffe16b}
+.ring-center .msg{font-size:clamp(18px,5vw,27px);font-weight:900;line-height:1.25;color:#ffe16b;text-shadow:0 2px 4px #000;margin-top:7px;overflow-wrap:anywhere}
+.ring-seats .seat.self .card{width:clamp(35px,10vw,54px);height:clamp(51px,14vw,75px);font-size:clamp(19px,5.5vw,29px)}
+.ring-seats .seat.self .nm{color:#80d7ff}
+
+/* Desktop: bordet till vänster, satsning och logg till höger. Mobilen behåller staplad vy. */
+.game-sidebar{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media(min-width:900px){
+ body{min-height:100vh}
+ #app{max-width:1480px;width:100%;padding:10px 18px;gap:8px}
+ #game:not(.hide){display:grid;grid-template-columns:minmax(0,1fr) 310px;align-items:start;gap:18px}
+ #game>.table{min-width:0;padding:0}
+ .poker-ring{height:min(76vh,680px);min-height:440px;width:100%;max-width:980px;margin:0 auto}
+ .game-sidebar{height:min(76vh,680px);min-height:440px}
+ .game-sidebar .ctl{flex:0 0 auto}
+ .game-sidebar .log{flex:1;max-height:none;min-height:0;overflow-y:auto;font-size:13px}
+ .game-sidebar .row{gap:6px}
+ .game-sidebar button{padding:10px 5px;min-height:44px;font-size:15px}
+ .ring-seats .seat{width:clamp(105px,11vw,145px)}
+ .ring-seats .seat .card{width:clamp(32px,3.3vw,46px);height:clamp(46px,4.5vw,63px)}
+ .ring-center .board .card{width:clamp(38px,4vw,59px);height:clamp(53px,5.6vw,80px)}
+}
+
+/* Kompaktare desktopvy och tydliga kort på höger sida. */
+@media(min-width:900px){
+  #game:not(.hide){grid-template-columns:minmax(0,1fr) 330px;gap:12px}
+  .poker-ring{height:min(79vh,700px);min-height:420px}
+  .game-sidebar{height:min(79vh,700px);min-height:420px;position:sticky;top:8px}
+  .game-sidebar .log{font-size:14px;line-height:1.55}
+  .ring-seats .seat.self{width:155px;background:#072e27;z-index:4}
+  .ring-seats .seat.self .card{width:52px;height:73px;font-size:27px}
+  .ring-center .pot b{font-size:42px}
+  .ring-center .msg{font-size:clamp(19px,2vw,29px)}
+}
+@media(max-width:899px){
+  .game-sidebar{margin-top:8px}
+  .ring-seats .seat.self{z-index:4}
+}
 </style></head><body>
 <div id="app">
  <h1>♠ Poker <small id="info"></small></h1>
@@ -81,10 +148,9 @@ textarea{height:84px;font-family:monospace;font-size:11px}
     <div class="ring-seats" id="bots"></div>
     <div class="ring-center"><div class="board" id="board"></div><div class="pot" id="pot"></div><div class="msg" id="msg"></div></div>
    </div>
-   <div class="me" id="me"></div>
+
   </div>
-  <div class="ctl" id="ctl" style="margin-top:10px"></div>
-  <div class="log" id="log" style="margin-top:10px"></div>
+  <aside class="game-sidebar"><div class="ctl" id="ctl"></div><div class="log" id="log"></div></aside>
  </div>
 </div>
 <script>
@@ -316,19 +382,17 @@ function render(){
   const v=V;if(!v)return;
   const me=v.players[v.you],isHost=role==='host';
   $('info').textContent=`${me.name} · Giv ${v.hand}`;
-  // Samma fasta plats för varje spelare på alla telefoner. Medurs: 0,1,2,...
+  // Den egna platsen ligger till höger på varje skärm. Övriga följer samma medurs spelordning.
   const count=v.players.length;
   $('bots').innerHTML=v.players.map((_,i)=>{
-    const a=(90+i*360/count)*Math.PI/180;
-    const x=50+37*Math.cos(a), y=50+39*Math.sin(a);
+    const a=((i-v.you)*360/count)*Math.PI/180;
+    const x=50+38*Math.cos(a), y=50+40*Math.sin(a);
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');
   $('pot').innerHTML=`Pott <b>${v.pot}</b>`+chips(v.pot);
   const myTurn=v.toAct===v.you&&!v.over&&!me.folded;
   $('msg').textContent=v.msg||(myTurn?'Din tur':(v.over?'':`${v.who} tänker…`));
-  $('me').className='me mine'+(myTurn?' turn':'');
-  $('me').innerHTML=`<div class="nm">Du spelar som: ${esc(me.name)}${badges(v.you,v)}</div><div class="st">${me.stack} marker${me.bet&&!v.over?' · insats '+me.bet:''}${me.last&&!v.over?' · '+me.last:''}</div><div class="cards">${me.out?'':me.cards.map(cardEl).join('')}</div>${v.over?'':chips(me.bet)}${me.folded&&!me.out&&!v.over?'<div class="act">Du har lagt ner</div>':''}`;
   const c=$('ctl');
   if(v.over){
     c.innerHTML=isHost?`<div class="row"><button class="big" id="deal">${v.matchOver?'Tillbaka till lobbyn':'Dela ut nästa giv nu'}</button></div>`:

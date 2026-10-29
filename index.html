@@ -169,6 +169,15 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
 #soundToggle{position:fixed;right:12px;top:10px;z-index:1000;background:#14643d;border:2px solid #ffe07a;color:white;border-radius:12px;padding:8px 12px;font-size:14px;min-height:40px;box-shadow:0 2px 9px #0009}
 #soundToggle.sound-on{background:#235b41;border-color:#64d8a0}
 @media(max-width:699px){#soundToggle{top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:10px}}
+/* Mobil: fem och sju spelare. Gemensamma kort hålls fria från sätena. */
+@media(max-width:699px){
+ .poker-ring.crowded-mobile{height:clamp(470px,132vw,580px)}
+ .poker-ring.crowded-mobile .ring-center{top:60%;width:84%;padding:6px 1px;z-index:3}
+ .poker-ring.crowded-mobile .ring-center .board{gap:2px;flex-wrap:nowrap}
+ .poker-ring.crowded-mobile .ring-center .board .card{width:clamp(27px,8vw,38px);height:clamp(40px,11.5vw,53px);font-size:clamp(14px,4vw,19px);flex-shrink:0}
+ .poker-ring.crowded-mobile .ring-seats .seat{width:clamp(78px,23vw,100px)}
+ .poker-ring.crowded-mobile .ring-seats .seat.self{width:clamp(95px,27vw,118px)}
+}
 /* Mer fri yta kring de fem gemensamma korten vid udda spelarantal. */
 .poker-ring.odd-seats .ring-center{top:57%;width:68%}
 @media(max-width:699px){.poker-ring.odd-seats .ring-center{top:56%;width:64%}}
@@ -616,13 +625,14 @@ function render(){
   // Den egna platsen ligger till höger på varje skärm. Övriga följer samma medurs spelordning.
   const count=v.players.length;
   document.querySelector('.poker-ring').classList.toggle('odd-seats',count%2===1);
+  document.querySelector('.poker-ring').classList.toggle('crowded-mobile',count===5||count===7);
   $('bots').innerHTML=v.players.map((_,i)=>{
     const a=((i-v.you)*360/count)*Math.PI/180;
     const x=50+42*Math.cos(a);
     let y=50+42*Math.sin(a);
     // Vid udda antal spelare hamnar en motståndare ibland över gemensamma kort.
     // Flytta de övre vänstra platserna utåt, utan att ändra spelordningen.
-    if(count%2===1 && x<50 && y<50) y=Math.max(12,y-14);
+    if(count%2===1 && x<50 && y<50) y=Math.max(8,y-19);
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');

@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.19</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.19">
-<meta name="application-name" content="♠ Ingolf-Poker 1.19">
+<title>♠ Ingolf-Poker 1.21</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.21">
+<meta name="application-name" content="♠ Ingolf-Poker 1.21">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -225,7 +225,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.19</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.21</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -732,7 +732,7 @@ function render(){
   document.querySelector('.poker-ring').classList.toggle('crowded-mobile',count===5||count===7);
   $('bots').innerHTML=v.players.map((_,i)=>{
     const a=((i-v.you)*360/count)*Math.PI/180;
-    const x=50+42*Math.cos(a);
+    let x=50+42*Math.cos(a);
     let y=50+42*Math.sin(a);
     // Vid udda antal spelare hamnar en motståndare ibland över gemensamma kort.
     // Flytta de övre vänstra platserna utåt, utan att ändra spelordningen.
@@ -744,6 +744,14 @@ function render(){
       // Endast vänster sidoplats (inte platserna längst upp/ned) flyttas.
       if(x<35 && y>24 && y<76) y=Math.max(12,y-16);
     }
+    // Håll hela spelarrutan inom bordet, även på smala iPhone-skärmar.
+    const ringWidth=$('ring').clientWidth || window.innerWidth;
+    const mobile=window.innerWidth<700;
+    const seatWidth=mobile?(count===5||count===7?Math.max(74,Math.min(92,window.innerWidth*.21)):Math.max(90,Math.min(138,window.innerWidth*.25))):Math.max(105,Math.min(145,window.innerWidth*.11));
+    const ownWidth=mobile?(count===5||count===7?Math.max(91,Math.min(113,window.innerWidth*.26)):seatWidth):155;
+    const half=(i===v.you?ownWidth:seatWidth)/2+5;
+    const margin=Math.min(49,100*half/ringWidth);
+    x=Math.max(margin,Math.min(100-margin,x));
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
   animateDealerMove(v);

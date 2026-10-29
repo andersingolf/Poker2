@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.25</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.25">
-<meta name="application-name" content="♠ Ingolf-Poker 1.25">
+<title>♠ Ingolf-Poker 1.26</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.26">
+<meta name="application-name" content="♠ Ingolf-Poker 1.26">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -195,6 +195,12 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
  .poker-ring.crowded-mobile .ring-seats .seat.self{width:clamp(91px,26vw,113px)}
 }
 
+/* iPhone: flytta endast de fem gemensamma korten åt vänster,
+   utan att flytta potten eller spelarnas platser. */
+@media(max-width:699px){
+ .poker-ring .ring-center .board{position:relative;left:-30px}
+}
+
 /* Den som senast höjde har en tydlig lila bakgrund vid sina kort. */
 .ring-seats .seat.raiser{background:#512467!important;border-color:#ed8cff!important;box-shadow:0 0 0 2px #b956e8,0 0 18px #ba5bf6aa!important;z-index:5}
 .ring-seats .seat.raiser .cards{background:#74318c;border-radius:8px;padding:4px 2px}
@@ -225,7 +231,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.25</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.26</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">

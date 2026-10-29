@@ -181,6 +181,16 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
 /* Mer fri yta kring de fem gemensamma korten vid udda spelarantal. */
 .poker-ring.odd-seats .ring-center{top:57%;width:68%}
 @media(max-width:699px){.poker-ring.odd-seats .ring-center{top:56%;width:64%}}
+/* iPhone-korrigering: endast mobil med fem eller sju spelare. */
+@media(max-width:699px){
+ .poker-ring.crowded-mobile{height:clamp(510px,145vw,620px)}
+ .poker-ring.crowded-mobile .ring-center,
+ .poker-ring.crowded-mobile.odd-seats .ring-center{top:52%;width:76%;padding:7px 0;z-index:3}
+ .poker-ring.crowded-mobile .ring-center .board{display:flex;justify-content:center;gap:2px;flex-wrap:nowrap}
+ .poker-ring.crowded-mobile .ring-center .board .card{width:clamp(25px,7.5vw,34px);height:clamp(37px,10.8vw,48px);font-size:clamp(13px,3.8vw,18px);flex-shrink:0}
+ .poker-ring.crowded-mobile .ring-seats .seat{width:clamp(74px,21vw,92px)}
+ .poker-ring.crowded-mobile .ring-seats .seat.self{width:clamp(91px,26vw,113px)}
+}
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
@@ -632,7 +642,9 @@ function render(){
     let y=50+42*Math.sin(a);
     // Vid udda antal spelare hamnar en motståndare ibland över gemensamma kort.
     // Flytta de övre vänstra platserna utåt, utan att ändra spelordningen.
-    if(count%2===1 && x<50 && y<50) y=Math.max(8,y-19);
+    if(count%2===1 && x<50 && y<50 && window.innerWidth>=700) y=Math.max(8,y-19);
+    // Mobil: placera sätena längre upp/ned längs kanten så mitten förblir fri.
+    if(window.innerWidth<700 && (count===5 || count===7)) y=50+45*Math.sin(a);
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');

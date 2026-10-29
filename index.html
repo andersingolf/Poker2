@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.22</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.22">
-<meta name="application-name" content="♠ Ingolf-Poker 1.22">
+<title>♠ Ingolf-Poker 1.23</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.23">
+<meta name="application-name" content="♠ Ingolf-Poker 1.23">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -225,7 +225,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.22</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.23</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -742,7 +742,11 @@ function render(){
       y=50+45*Math.sin(a);
       // iPhone: sänk spelaren på vänster sida så namn och kort syns helt.
       // Flytta bara vänster sidoplats, inte sätena högst upp eller längst ned.
-      if(x<35 && y>24 && y<76) y=Math.min(78,y+9);
+      if(x<35 && y>24 && y<85) y=Math.min(86,y+26);
+    }
+    // På iPhone med andra spelarantal: sänk också platsen längst till vänster rejält.
+    if(window.innerWidth<700 && count!==5 && count!==7 && x<35 && y>24 && y<85) {
+      y=Math.min(86,y+26);
     }
     // Håll hela spelarrutan inom bordet, även på smala iPhone-skärmar.
     const ringWidth=$('ring').clientWidth || window.innerWidth;

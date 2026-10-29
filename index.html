@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.26</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.26">
-<meta name="application-name" content="♠ Ingolf-Poker 1.26">
+<title>♠ Ingolf-Poker 1.27</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.27">
+<meta name="application-name" content="♠ Ingolf-Poker 1.27">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -231,7 +231,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.26</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.27</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -830,13 +830,13 @@ function animateDealerMove(v){
 }
 function showBetFlash(v){
   const ev=v.soundEvent;
-  if(!ev||ev.id<=lastBetFlashId||!ev.amount||ev.player==null)return;
+  if(!ev||ev.id<=lastBetFlashId||ev.player==null)return;
   lastBetFlashId=ev.id;
   const seatEl=$('bots').querySelector(`[data-player="${ev.player}"]`);
   if(!seatEl)return;
   const tag=document.createElement('div');
   tag.className='bet-flash';
-  tag.textContent=`−${ev.amount} marker`;
+  tag.textContent=ev.type==='fold'?'Lägger sig':ev.type==='check'?'Checkar':`−${ev.amount} marker`;
   seatEl.appendChild(tag);
   setTimeout(()=>tag.remove(),2000);
 }

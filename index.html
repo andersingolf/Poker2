@@ -169,6 +169,9 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
 #soundToggle{position:fixed;right:12px;top:10px;z-index:1000;background:#14643d;border:2px solid #ffe07a;color:white;border-radius:12px;padding:8px 12px;font-size:14px;min-height:40px;box-shadow:0 2px 9px #0009}
 #soundToggle.sound-on{background:#235b41;border-color:#64d8a0}
 @media(max-width:699px){#soundToggle{top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:10px}}
+/* Mer fri yta kring de fem gemensamma korten vid udda spelarantal. */
+.poker-ring.odd-seats .ring-center{top:57%;width:68%}
+@media(max-width:699px){.poker-ring.odd-seats .ring-center{top:56%;width:64%}}
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
@@ -377,18 +380,34 @@ let cl={pc:null,dc:null,state:'',name:'',room:'',err:''};
 
 /* ---------- utvärdering ---------- */
 function score5(c){
-  const rs=c.map(x=>x.r).sort((a,b)=>b-a),fl=c.every(x=>x.s===c[0].s),cnt={};
-  rs.forEach(r=>cnt[r]=(cnt[r]||0)+1);
-  const gr=Object.entries(cnt).map(([r,n])=>[+r,n]).sort((a,b)=>b[1]-a[1]||b[0]-a[0]);
-  let st=gr.length===5&&rs[0]-rs[4]===4,hi=rs[0];
-  if(gr.length===5&&rs.join()==='14,5,4,3,2'){st=true;hi=5}
-  let cat;
-  if(st&&fl)cat=8;else if(gr[0][1]===4)cat=7;else if(gr[0][1]===3&&gr[1]&&gr[1][1]===2)cat=6;
-  else if(fl)cat=5;else if(st)cat=4;else if(gr[0][1]===3)cat=3;else if(gr[0][1]===2&&gr[1][1]===2)cat=2;
-  else if(gr[0][1]===2)cat=1;else cat=0;
-  const k=st?[hi]:gr.map(g=>g[0]);
-  let s=cat;for(let i=0;i<5;i++)s=s*15+(k[i]||0);
-  return s;
+  // Jämför först handkategori, sedan alla relevanta valörer i fallande ordning.
+  // Fem bas-15-siffror gör att även kickers avgör vid lika handkategori.
+  const rs=c.map(x=>x.r).sort((a,b)=>b-a);
+  const flush=c.every(x=>x.s===c[0].s);
+  const count=new Map();
+  rs.forEach(r=>count.set(r,(count.get(r)||0)+1));
+  const groups=[...count].map(([r,n])=>({r,n})).sort((a,b)=>b.n-a.n||b.r-a.r);
+  const unique=[...count.keys()].sort((a,b)=>b-a);
+  const wheel=unique.join(',')==='14,5,4,3,2';
+  const straight=unique.length===5&&(unique[0]-unique[4]===4||wheel);
+  const highStraight=wheel?5:unique[0];
+  let cat,rank;
+  if(straight&&flush){cat=8;rank=[highStraight]}
+  else if(groups[0].n===4){cat=7;rank=[groups[0].r,groups[1].r]}
+  else if(groups[0].n===3&&groups[1].n===2){cat=6;rank=[groups[0].r,groups[1].r]}
+  else if(flush){cat=5;rank=rs}
+  else if(straight){cat=4;rank=[highStraight]}
+  else if(groups[0].n===3){cat=3;rank=[groups[0].r,...groups.slice(1).map(g=>g.r).sort((a,b)=>b-a)]}
+  else if(groups[0].n===2&&groups[1].n===2){
+    cat=2;
+    const pairs=groups.filter(g=>g.n===2).map(g=>g.r).sort((a,b)=>b-a);
+    rank=[...pairs,groups.find(g=>g.n===1).r];
+  }
+  else if(groups[0].n===2){cat=1;rank=[groups[0].r,...groups.slice(1).map(g=>g.r).sort((a,b)=>b-a)]}
+  else {cat=0;rank=rs}
+  let score=cat;
+  for(let i=0;i<5;i++)score=score*15+(rank[i]||0);
+  return score;
 }
 function best(cards){
   let b=-1;const n=cards.length;
@@ -596,9 +615,14 @@ function render(){
   $('info').textContent=`${me.name} · Giv ${v.hand}`;
   // Den egna platsen ligger till höger på varje skärm. Övriga följer samma medurs spelordning.
   const count=v.players.length;
+  document.querySelector('.poker-ring').classList.toggle('odd-seats',count%2===1);
   $('bots').innerHTML=v.players.map((_,i)=>{
     const a=((i-v.you)*360/count)*Math.PI/180;
-    const x=50+38*Math.cos(a), y=50+40*Math.sin(a);
+    const x=50+42*Math.cos(a);
+    let y=50+42*Math.sin(a);
+    // Vid udda antal spelare hamnar en motståndare ibland över gemensamma kort.
+    // Flytta de övre vänstra platserna utåt, utan att ändra spelordningen.
+    if(count%2===1 && x<50 && y<50) y=Math.max(12,y-14);
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');

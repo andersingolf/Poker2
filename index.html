@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.38</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.38">
-<meta name="application-name" content="♠ Ingolf-Poker 1.38">
+<title>♠ Ingolf-Poker 1.39</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.39">
+<meta name="application-name" content="♠ Ingolf-Poker 1.39">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -229,6 +229,27 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
  }
 }
 
+/* 1.39: I liggande telefonläge ska mattan följa kortgruppen,
+   inte ligga kvar som en separat centrerad platta bakom den. */
+@media (orientation:landscape) and (max-height:600px) and (max-width:1000px){
+ .poker-ring .ring-center{
+   background:transparent!important;
+   box-shadow:none!important;
+ }
+ .poker-ring .ring-center .board{
+   left:0!important;
+   transform:translateX(-85px)!important;
+   background:#06391f!important;
+   border-radius:18px!important;
+   padding:12px 14px!important;
+   box-sizing:content-box!important;
+   width:max-content!important;
+   max-width:none!important;
+   margin-left:auto!important;
+   margin-right:auto!important;
+ }
+}
+
 /* Den som senast höjde har en tydlig lila bakgrund vid sina kort. */
 .ring-seats .seat.raiser{background:#512467!important;border-color:#ed8cff!important;box-shadow:0 0 0 2px #b956e8,0 0 18px #ba5bf6aa!important;z-index:5}
 .ring-seats .seat.raiser .cards{background:#74318c;border-radius:8px;padding:4px 2px}
@@ -260,7 +281,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.38</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.39</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">

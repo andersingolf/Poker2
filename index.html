@@ -2,7 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.8</title>
+<title>♠ Ingolf-Poker 1.19</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.19">
+<meta name="application-name" content="♠ Ingolf-Poker 1.19">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -201,10 +203,29 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
 h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-space:nowrap}
 .bet-flash{position:absolute;z-index:50;transform:translate(-50%,-100%);pointer-events:none;white-space:nowrap;padding:5px 10px;border:2px solid #ffe17c;border-radius:12px;background:#43220c;color:#fff4b5;font-weight:900;font-size:clamp(18px,4.8vw,27px);text-shadow:0 1px 3px #000;box-shadow:0 3px 18px #0009;animation:betPop 2s ease-out forwards}
 @keyframes betPop{0%{opacity:0;transform:translate(-50%,-80%) scale(.7)}12%,82%{opacity:1;transform:translate(-50%,-110%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-130%) scale(1)}}
+/* Samma satsningsruta för samtliga spelare: nedflyttad ovanpå korten. */
+.ring-seats .seat{overflow:visible}
+.ring-seats .seat .bet-flash{
+ left:50%;top:calc(65% + 38px);z-index:100;
+ max-width:95%;font-size:clamp(16px,4.8vw,23px);
+ white-space:nowrap;animation:betPopOnCards 2s ease-out forwards;
+}
+@media(max-width:699px){
+ .ring-seats .seat .bet-flash{font-size:clamp(15px,4.5vw,20px)}
+}
+@keyframes betPopOnCards{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}12%,82%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+/* Markera dealer tydligt under två sekunder före varje giv. */
+.ring-seats .seat.dealer-spotlight{z-index:30!important;border-color:#ffe27a!important;box-shadow:0 0 0 4px #ffdd66,0 0 28px 12px #ffcf5588!important}
+.ring-seats .seat.dealer-spotlight .dealer-badge{display:inline-grid;place-items:center;min-width:42px;height:42px;font-size:27px;font-weight:1000;border-radius:50%;background:#ffe16b;color:#382100;border:3px solid #fff5bb;box-shadow:0 0 16px #ffd34e;vertical-align:middle;animation:dealerPulse 1s ease-in-out infinite alternate}
+@keyframes dealerPulse{from{transform:scale(1)}to{transform:scale(1.16)}}
+/* Flygande dealerknapp mellan platserna, före nästa giv. */
+.dealer-flying{position:fixed;z-index:9999;pointer-events:none;width:43px;height:43px;border-radius:50%;display:grid;place-items:center;background:#ffe16b;color:#382100;border:3px solid #fff5bb;box-shadow:0 0 17px #ffd34e;font-size:27px;font-weight:1000;transform:translate(-50%,-50%)}
+.ring-seats .seat.dealer-moving .dealer-badge{visibility:hidden}
+
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.8</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.19</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -227,9 +248,11 @@ const $=id=>document.getElementById(id);
 const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 let role=null; // 'host' | 'client' | null
 let G=null,timer=null,logs=[],raiseTo=0,V=null;
+let dealerMoveHand=-1;
 let animatedWinKey=null, playedWinSoundKey=null, audioCtx=null;
 let lastDealHand=null,lastBoardCount=0,cardSoundTimers=[];
 let dealRevealHand=null,dealRevealed=0,dealSequence=[];
+let previewHand=null;
 let lastSoundEventId=0, lastBetFlashId=0;
 // Kort, mjukt prassel/snärt för varje utdelat kort. Skapas utan externa ljudfiler.
 function playCardSound(){
@@ -304,6 +327,20 @@ function soundActions(v){
   else if(ev.type==='check')playFoldBang();
 }
 function soundDealtCards(v){
+  // Starta varken kortanimation eller kortljud medan dealerknappen blinkar.
+  // Den nya given animeras först när beginDeal() avslutar förhandsvisningen.
+  if(v.dealerPreview){
+    // Nollställ den föregående givens animation redan under dealer-visningen.
+    if(previewHand!==v.hand){
+      previewHand=v.hand;
+      cardSoundTimers.forEach(clearTimeout);cardSoundTimers=[];
+      dealRevealHand=v.hand;
+      dealRevealed=0;
+      dealSequence=[];
+      lastBoardCount=0;
+    }
+    return;
+  }
   if(!v.hand)return;
   if(lastDealHand!==v.hand){
     lastDealHand=v.hand;
@@ -475,8 +512,13 @@ function startMatch(){
   const bn=[['Arne',.5],['Tobbe',.85],['Göran',.65],['Henrik',.75],['Lennart',.45],['Jonas',.9]];
   for(let i=0;i<botCount;i++)ps.push(mkPlayer({name:bn[i][0],bot:true,agg:bn[i][1]}));
   if(ps.length<2)return;
+  // Slumpa sittordningen en gång vid matchstart; behåll den under hela matchen.
+  for(let i=ps.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [ps[i],ps[j]]=[ps[j],ps[i]];
+  }
   logs=[];
-  G={players:ps,board:[],deck:[],dealer:ps.length-1,phase:'idle',toAct:null,currentBet:0,minRaise:BB,over:true,runout:false,reveal:false,hand:0,matchOver:false,msg:'',winners:[],soundEvent:null,soundSeq:0};
+  G={players:ps,board:[],deck:[],dealer:Math.floor(Math.random()*ps.length)-1,phase:'idle',toAct:null,currentBet:0,minRaise:BB,over:true,runout:false,reveal:false,hand:0,matchOver:false,msg:'',winners:[],soundEvent:null,soundSeq:0};
   showGame();startHand();
 }
 function startHand(){
@@ -485,10 +527,24 @@ function startHand(){
   P.forEach(p=>{p.out=p.stack<=0||p.gone;p.bet=0;p.total=0;p.cards=[];p.folded=p.out;p.allIn=false;p.acted=false;p.last=''});
   if(P.filter(p=>!p.out).length<2){G.matchOver=true;G.over=true;G.msg='Matchen är slut.';render();return}
   G.winners=[];G.winPot=0;G.lastRaiser=null;G.hand++;G.over=false;G.reveal=false;G.runout=false;G.board=[];G.phase='preflop';
+  const previousDealer=G.hand>1?G.dealer:-1;
+  G.dealer=nextIdx(G.dealer,p=>!p.out);
+  G.dealerFrom=previousDealer;
+  G.dealerPreview=true;
+  G.dealing=true;
+  G.toAct=null;
+  G.msg=`${P[G.dealer].name} är dealer`;
+  render();
+  // Visa en förstärkt dealerknapp i två sekunder innan korten delas ut.
+  timer=setTimeout(()=>{if(!G||G.over||!G.dealerPreview)return;beginDeal()},2000);
+}
+function beginDeal(){
+  const P=G.players;
+  G.dealerPreview=false;
+  G.msg='';
   const d=[];for(let s=0;s<4;s++)for(let r=2;r<=14;r++)d.push({r,s});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}
   G.deck=d;
-  G.dealer=nextIdx(G.dealer,p=>!p.out);
   const alive=P.filter(p=>!p.out).length;
   let sb,bb;
   if(alive===2){sb=G.dealer;bb=nextIdx(sb,p=>!p.out)}else{sb=nextIdx(G.dealer,p=>!p.out);bb=nextIdx(sb,p=>!p.out)}
@@ -628,7 +684,7 @@ function bot(i){
 /* ---------- vy per spelare ---------- */
 function view(i){
   const P=G.players,me=P[i],max=me.stack+me.bet;
-  return {hand:G.hand,board:G.board,pot:G.over&&G.winPot?G.winPot:pot(),msg:G.msg,winners:G.winners||[],over:G.over,dealing:!!G.dealing,matchOver:G.matchOver,toAct:G.toAct,lastRaiser:G.lastRaiser,soundEvent:G.soundEvent,you:i,
+  return {hand:G.hand,board:G.board,pot:G.over&&G.winPot?G.winPot:pot(),msg:G.msg,winners:G.winners||[],over:G.over,dealing:!!G.dealing,dealerPreview:!!G.dealerPreview,dealerFrom:G.dealerFrom,matchOver:G.matchOver,toAct:G.toAct,lastRaiser:G.lastRaiser,soundEvent:G.soundEvent,you:i,
     dealer:G.dealer,sb:G.sb,bb:G.bb,currentBet:G.currentBet,toCall:Math.min(G.currentBet-me.bet,me.stack),
     minTo:Math.min(minTo(),max,G.currentBet+MAXR),maxTo:Math.min(max,G.currentBet+MAXR),canRaise:max>G.currentBet,
     who:G.toAct!=null&&P[G.toAct]?P[G.toAct].name:'',logs:logs.slice(-12),
@@ -655,17 +711,17 @@ function cardEl(c){
 const DEN=[[30,'K'],[10,'G'],[5,'B'],[2,'R'],[1,'W']];
 function chips(n){n=Math.round(n)||0;if(n<=0)return '<div class="chips"></div>';let h='';for(const [d,c] of DEN){const k=Math.floor(n/d);n-=k*d;if(k)h+=`<span class="chip ch${c}" title="${d}">${k>1?k+'×':''}${d}</span>`}return '<div class="chips">'+h+'</div>'}
 const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-function badges(i,v){return (v.hand?(i===v.dealer?'<span class="badge">D</span>':'')+(i===v.sb&&!v.players[i].out?'<span class="badge">SB</span>':'')+(i===v.bb&&!v.players[i].out?'<span class="badge">BB</span>':''):'')}
+function badges(i,v){return (v.hand?(i===v.dealer?'<span class="badge dealer-badge">D</span>':'')+(i===v.sb&&!v.players[i].out?'<span class="badge">SB</span>':'')+(i===v.bb&&!v.players[i].out?'<span class="badge">BB</span>':''):'')}
 function seat(i,v){
   const p=v.players[i];
-  return `<div data-player="${i}" class="seat ${v.over&&v.winners?.includes(i)?'winner':''} ${v.toAct===i&&!v.over&&!v.dealing?'turn turn-flash':''} ${v.lastRaiser===i&&!v.over&&!p.folded?'raiser':''} ${p.folded&&!p.out?'fold':''} ${p.out?'out':''}">
+  return `<div data-player="${i}" class="seat ${v.dealerPreview&&i===v.dealer?'dealer-spotlight':''} ${v.dealerPreview&&v.dealerFrom>=0&&i===v.dealer?'dealer-moving':''} ${v.over&&v.winners?.includes(i)?'winner':''} ${v.toAct===i&&!v.over&&!v.dealing?'turn turn-flash':''} ${v.lastRaiser===i&&!v.over&&!p.folded?'raiser':''} ${p.folded&&!p.out?'fold':''} ${p.out?'out':''}">
    <div class="nm">${esc(p.name)}${badges(i,v)}</div><div class="st">${p.out?'Ute':p.stack+' marker'}</div>
-   <div class="cards">${p.out?'':p.cards.slice(0,dealRevealHand===v.hand?dealSequence.slice(0,dealRevealed).filter(x=>x===i).length:p.cards.length).map(cardEl).join('')}</div>
+   <div class="cards">${p.out?'':p.cards.slice(0,v.dealerPreview?0:(dealRevealHand===v.hand?dealSequence.slice(0,dealRevealed).filter(x=>x===i).length:p.cards.length)).map(cardEl).join('')}</div>
    ${v.over?'':chips(p.bet)}<div class="act">${v.over?'':(p.bet?'Insats '+p.bet:'')+(p.bet&&p.last?' · ':'')+p.last}</div>
    ${i===v.you?`<div class="mobile-seat-status" aria-live="polite">${esc(v.msg||(v.toAct===v.you&&!v.over&&!v.dealing?'Din tur':(!v.over&&!v.dealing&&v.who?v.who+'s tur':'')))}</div>`:''}</div>`;
 }
 function render(){
-  if(role==='host'){V=view(0);sync()}
+  if(role==='host'){const ownIndex=G.players.findIndex(p=>p.local===true);V=view(ownIndex);sync()}
   const v=V;if(!v)return;
   const me=v.players[v.you],isHost=role==='host';
   soundDealtCards(v);
@@ -690,6 +746,7 @@ function render(){
     }
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
+  animateDealerMove(v);
   showBetFlash(v);
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');
   $('pot').innerHTML=`Pott <b>${v.pot}</b>`+chips(v.pot);
@@ -723,19 +780,38 @@ function render(){
   playWinSound(v);
   animateWinningChips(v);
 }
+function animateDealerMove(v){
+  if(!v.dealerPreview||v.dealerFrom==null||v.dealerFrom<0||v.dealerFrom===v.dealer)return;
+  if(dealerMoveHand===v.hand)return;
+  dealerMoveHand=v.hand;
+  const from=$('bots').querySelector(`[data-player="${v.dealerFrom}"]`);
+  const to=$('bots').querySelector(`[data-player="${v.dealer}"]`);
+  if(!from||!to)return;
+  const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
+  const ax=a.left+a.width/2,ay=a.top+24,bx=b.left+b.width/2,by=b.top+24;
+  const chip=document.createElement('div');chip.className='dealer-flying';chip.textContent='D';
+  chip.style.left=ax+'px';chip.style.top=ay+'px';document.body.appendChild(chip);
+  const motion=chip.animate([
+    {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:0},
+    {transform:`translate(calc(-50% + ${(bx-ax)/2}px), calc(-50% + ${(by-ay)/2-36}px)) scale(1.45)`,opacity:1,offset:.5},
+    {transform:`translate(calc(-50% + ${bx-ax}px), calc(-50% + ${by-ay}px)) scale(1)`,opacity:1,offset:1}
+  ],{duration:1050,easing:'ease-in-out',fill:'forwards'});
+  motion.onfinish=()=>{
+    chip.remove();
+    const target=$('bots').querySelector(`[data-player="${v.dealer}"]`);
+    if(target&&V&&V.hand===v.hand)target.classList.remove('dealer-moving');
+  };
+}
 function showBetFlash(v){
   const ev=v.soundEvent;
   if(!ev||ev.id<=lastBetFlashId||!ev.amount||ev.player==null)return;
   lastBetFlashId=ev.id;
-  const ring=$('ring'),seatEl=$('bots').querySelector(`[data-player="${ev.player}"]`);
-  if(!ring||!seatEl)return;
-  const a=seatEl.getBoundingClientRect(),b=ring.getBoundingClientRect();
+  const seatEl=$('bots').querySelector(`[data-player="${ev.player}"]`);
+  if(!seatEl)return;
   const tag=document.createElement('div');
   tag.className='bet-flash';
   tag.textContent=`−${ev.amount} marker`;
-  tag.style.left=`${a.left+a.width/2-b.left}px`;
-  tag.style.top=`${a.top-b.top-8}px`;
-  ring.appendChild(tag);
+  seatEl.appendChild(tag);
   setTimeout(()=>tag.remove(),2000);
 }
 function animateWinningChips(v){
@@ -774,7 +850,7 @@ function animateWinningChips(v){
 }
 function doAct(type,to){
   raiseTo=0;
-  if(role==='host'){if(!G.over&&G.toAct===0)act(0,type,to)}
+  if(role==='host'){const ownIndex=G.players.findIndex(p=>p.local===true);if(!G.over&&G.toAct===ownIndex)act(ownIndex,type,to)}
   else if(cl.dc&&cl.dc.readyState==='open')cl.dc.send(JSON.stringify({t:'act',type,to}));
 }
 function showGame(){$('lobby').classList.add('hide');$('game').classList.remove('hide')}

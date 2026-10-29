@@ -644,7 +644,12 @@ function render(){
     // Flytta de övre vänstra platserna utåt, utan att ändra spelordningen.
     if(count%2===1 && x<50 && y<50 && window.innerWidth>=700) y=Math.max(8,y-19);
     // Mobil: placera sätena längre upp/ned längs kanten så mitten förblir fri.
-    if(window.innerWidth<700 && (count===5 || count===7)) y=50+45*Math.sin(a);
+    if(window.innerWidth<700 && (count===5 || count===7)) {
+      y=50+45*Math.sin(a);
+      // iPhone: lyft spelaren på vänster sida så att gemensamma kort inte skyms.
+      // Endast vänster sidoplats (inte platserna längst upp/ned) flyttas.
+      if(x<35 && y>24 && y<76) y=Math.max(12,y-16);
+    }
     return `<div style="position:absolute;left:${x}%;top:${y}%;width:0;height:0">${seat(i,v).replace('class="seat ',`class="seat ${i===v.you?'self ':''}`)}</div>`;
   }).join('');
   $('board').innerHTML=[0,1,2,3,4].map(i=>v.board[i]?cardEl(v.board[i]):'<div class="card slot"></div>').join('');

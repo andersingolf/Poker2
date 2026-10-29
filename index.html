@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.27</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.27">
-<meta name="application-name" content="♠ Ingolf-Poker 1.27">
+<title>♠ Ingolf-Poker 1.31</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.31">
+<meta name="application-name" content="♠ Ingolf-Poker 1.31">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -213,11 +213,12 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 .ring-seats .seat{overflow:visible}
 .ring-seats .seat .bet-flash{
  left:50%;top:calc(65% + 38px);z-index:100;
- max-width:95%;font-size:clamp(16px,4.8vw,23px);
- white-space:nowrap;animation:betPopOnCards 2s ease-out forwards;
+ box-sizing:border-box;width:max-content;max-width:min(155px,calc(100vw - 24px));
+ font-size:clamp(13px,3.8vw,19px);line-height:1.15;text-align:center;
+ white-space:normal;overflow-wrap:break-word;animation:betPopOnCards 2s ease-out forwards;
 }
 @media(max-width:699px){
- .ring-seats .seat .bet-flash{font-size:clamp(15px,4.5vw,20px)}
+ .ring-seats .seat .bet-flash{font-size:clamp(13px,3.7vw,16px);max-width:112px;padding:5px 6px}
 }
 @keyframes betPopOnCards{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}12%,82%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
 /* Markera dealer tydligt under två sekunder före varje giv. */
@@ -231,7 +232,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.27</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.31</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -260,6 +261,7 @@ let lastDealHand=null,lastBoardCount=0,cardSoundTimers=[];
 let dealRevealHand=null,dealRevealed=0,dealSequence=[];
 let previewHand=null;
 let lastSoundEventId=0, lastBetFlashId=0;
+let activeBetFlash=null; // Behåll åtgärdsrutan även om bordet ritas om direkt efter check.
 // Kort, mjukt prassel/snärt för varje utdelat kort. Skapas utan externa ljudfiler.
 function playCardSound(){
   try{
@@ -585,7 +587,7 @@ function act(i,type,to){
     p.last=(p.allIn?'All-in ':wasBet?'Bet ':'Höjer till ')+to;
     log(`${p.name} ${wasBet?'bettar':'höjer till'} ${to}${p.allIn?' (all-in)':''}.`);
   }
-  G.soundEvent={id:++G.soundSeq,type:type==='fold'?'fold':type==='call'&&call===0?'check':'other',player:i,amount:p.bet-betBefore};
+  G.soundEvent={id:++G.soundSeq,type:type==='fold'?'fold':type==='call'?(call===0?'check':'call'):'other',player:i,amount:p.bet-betBefore};
   p.acted=true;
   G.toAct=nextPending(i);
   render();step();
@@ -830,16 +832,33 @@ function animateDealerMove(v){
 }
 function showBetFlash(v){
   const ev=v.soundEvent;
-  if(!ev||ev.id<=lastBetFlashId||ev.player==null)return;
-  lastBetFlashId=ev.id;
-  const seatEl=$('bots').querySelector(`[data-player="${ev.player}"]`);
+  if(ev&&ev.player!=null&&ev.id>lastBetFlashId){
+    lastBetFlashId=ev.id;
+    activeBetFlash={id:ev.id,player:ev.player,
+      text:ev.type==='fold'?'Lägger sig':ev.type==='check'?'Checkar':ev.type==='call'?`Synar ${ev.amount} marker`:`Satsar ${ev.amount} marker`,
+      expires:Date.now()+2000};
+  }
+  // render() bygger om alla spelarrutor, t.ex. direkt när en check avslutar
+  // satsningsrundan. Återskapa då meddelandet under den återstående tiden.
+  if(!activeBetFlash)return;
+  const remaining=activeBetFlash.expires-Date.now();
+  if(remaining<=0){activeBetFlash=null;return}
+  const seatEl=$('bots').querySelector(`[data-player="${activeBetFlash.player}"]`);
   if(!seatEl)return;
   const tag=document.createElement('div');
   tag.className='bet-flash';
-  tag.textContent=ev.type==='fold'?'Lägger sig':ev.type==='check'?'Checkar':`−${ev.amount} marker`;
+  tag.textContent=activeBetFlash.text;
+  tag.style.animation='none';
+  tag.style.opacity='1';
+  tag.style.transform='translate(-50%,-50%)';
   seatEl.appendChild(tag);
-  setTimeout(()=>tag.remove(),2000);
+  const flashId=activeBetFlash.id;
+  setTimeout(()=>{
+    tag.remove();
+    if(activeBetFlash?.id===flashId&&Date.now()>=activeBetFlash.expires)activeBetFlash=null;
+  },remaining);
 }
+
 function animateWinningChips(v){
   if(!v.over||!v.winners?.length||!v.pot)return;
   const key=`${role}-${v.hand}-${v.winners.join('-')}`;

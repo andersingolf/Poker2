@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.48</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.48">
-<meta name="application-name" content="♠ Ingolf-Poker 1.48">
+<title>♠ Ingolf-Poker 1.50</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.50">
+<meta name="application-name" content="♠ Ingolf-Poker 1.50">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -322,10 +322,6 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
  .result-banner{min-height:30px!important;padding:5px!important;font-size:14px!important}
 }
 
-/* 1.48: Dölj markerna ovanför Bet/Höj-knappen enbart på telefon. */
-@media (max-width:699px), (orientation:landscape) and (max-height:600px) and (max-width:1000px){
- #ctl #rch{display:none!important}
-}
 
 /* 1.44: Större och tydligare antal marker i telefonvyn. */
 @media (max-width:699px), (orientation:landscape) and (max-height:600px) and (max-width:1000px){
@@ -395,11 +391,11 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 }
 /* 1.47: Utnyttja hela skärmytan när telefonen hålls liggande. */
 @media (orientation:landscape) and (max-height:600px) and (max-width:1000px){
- html,body{width:100%;height:100%;height:100dvh;margin:0;overflow:hidden}
+ html,body{width:100%;min-height:100%;margin:0}
  body{min-height:0;display:block}
- #app{width:100%;max-width:none;height:100%;height:100dvh;overflow:hidden;padding:env(safe-area-inset-top,2px) env(safe-area-inset-right,5px) env(safe-area-inset-bottom,3px) env(safe-area-inset-left,5px);gap:2px}
- #game:not(.hide){flex:1;min-height:0;overflow:hidden;gap:2px!important}
- #game>.table{flex:1;min-height:0;overflow:hidden}
+ #app{width:100%;max-width:none;min-height:100dvh;padding:env(safe-area-inset-top,2px) env(safe-area-inset-right,5px) env(safe-area-inset-bottom,3px) env(safe-area-inset-left,5px);gap:2px}
+ #game:not(.hide){flex:1;min-height:0;gap:2px!important}
+ #game>.table{flex:1;min-height:0}
  .poker-ring{flex:1;height:auto!important;min-height:0!important;max-height:none!important}
  #game .result-banner{min-height:0;padding:2px 5px;margin:0;font-size:12px;line-height:1.1}
  .game-sidebar{flex:0 0 auto;min-height:0!important;max-height:33vh;overflow:auto}
@@ -409,11 +405,15 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
  :fullscreen #fullscreenToggle{display:none}
 }
 #fullscreenToggle{display:none}
+/* 1.49: Dölj enbart dekorativa marker ovanför satsningsknappen på mobil. */
+@media (max-width:699px), (orientation:landscape) and (max-height:600px) and (max-width:1000px){
+ #rch .chips{display:none!important}
+}
 </style></head><body>
 <button id="fullscreenToggle" type="button" aria-label="Visa i helskärm">⛶ Helskärm</button>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.48</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.50</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -429,6 +429,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 <script>
 (()=>{
 const MAXR=50,SB=2,BB=4,START=1000,DELAY=1000,NEXT=30000;
+const $=id=>document.getElementById(id);
 // Helskärms-API kräver ett aktivt knapptryck. iPhone Safari kan neka API:t;
 // då används den kant-till-kant-anpassade vyn ovan (hemskärmsapp ger bäst resultat).
 $('fullscreenToggle').addEventListener('click',async()=>{
@@ -440,7 +441,6 @@ $('fullscreenToggle').addEventListener('click',async()=>{
 const SU=['♠','♥','♦','♣'],RK={11:'J',12:'Q',13:'K',14:'A'};
 const rk=r=>RK[r]||String(r);
 const HN=['Högt kort','Ett par','Två par','Tretal','Stege','Färg','Kåk','Fyrtal','Straight flush'];
-const $=id=>document.getElementById(id);
 const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 let role=null; // 'host' | 'client' | null
 let G=null,timer=null,logs=[],raiseTo=0,V=null;

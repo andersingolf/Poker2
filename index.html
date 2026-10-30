@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.42</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.42">
-<meta name="application-name" content="♠ Ingolf-Poker 1.42">
+<title>♠ Ingolf-Poker 1.44</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.44">
+<meta name="application-name" content="♠ Ingolf-Poker 1.44">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#0d2a1f;color:#eef3ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
@@ -291,6 +291,39 @@ button{min-height:49px;font-size:17px;box-shadow:0 2px 5px #0005}.f{background:#
  }
 }
 
+/* 1.43: Kompakt liggande telefonvy utan att krympa uppvända kort. */
+@media (orientation:landscape) and (max-height:600px) and (max-width:1000px){
+ #app{max-width:none;width:100%;padding:4px 7px 12px;gap:3px}
+ h1{font-size:15px;margin:0}
+ #game:not(.hide){display:flex!important;flex-direction:column!important;gap:4px!important;width:100%}
+ #game>.table{width:100%;padding:0;gap:4px;grid-column:auto;grid-row:auto}
+ .poker-ring{width:100%;max-width:none;height:clamp(285px,78vh,425px);min-height:0;margin:0 auto;border-width:6px}
+ .ring-seats .seat{width:clamp(78px,11vw,112px);padding:2px 2px;border-radius:9px}
+ .ring-seats .seat.self{width:clamp(100px,15vw,136px)}
+ .ring-seats .seat .nm{font-size:clamp(11px,1.7vw,14px);line-height:1.05}
+ .ring-seats .seat .st{font-size:11px}
+ .ring-seats .seat .cards{margin:2px 0;gap:2px}
+ .ring-seats .seat .card.back{width:clamp(24px,3.3vw,34px);height:clamp(34px,4.6vw,47px)}
+ .ring-seats .seat .card:not(.back):not(.slot){width:clamp(38px,5vw,55px);height:clamp(54px,7vw,76px);font-size:clamp(20px,3vw,30px)}
+ .ring-seats .seat.self .card:not(.back):not(.slot){width:clamp(47px,6.3vw,65px);height:clamp(67px,8.6vw,91px);font-size:clamp(25px,3.5vw,35px)}
+ .ring-center{width:auto;max-width:65%;padding:0!important}
+ .poker-ring .ring-center .board{transform:translateX(-35px)!important;gap:4px!important;padding:8px 10px!important}
+ .poker-ring .ring-center .board .card{width:clamp(43px,6vw,62px)!important;height:clamp(62px,8.4vw,86px)!important;font-size:clamp(22px,3.4vw,33px)!important}
+ .poker-ring .ring-center .board .card:not(.back):not(.slot){width:clamp(49px,6.6vw,69px)!important;height:clamp(69px,9vw,96px)!important;font-size:clamp(25px,3.8vw,37px)!important}
+ .ring-center .pot{font-size:15px}.ring-center .pot b{font-size:25px}
+ .game-sidebar{grid-column:auto!important;grid-row:auto!important;position:static!important;height:auto!important;min-height:0!important;width:100%;margin-top:2px;padding:5px!important;gap:4px}
+ .game-sidebar .ctl{gap:4px}.game-sidebar .row{gap:5px}
+ .game-sidebar button{min-height:36px;padding:7px 5px;font-size:14px}
+ .game-sidebar .log{max-height:55px;min-height:0;flex:none;font-size:11px}
+ .game-sidebar .ctl::before,.game-sidebar .log::before{display:none}
+ .result-banner{min-height:30px!important;padding:5px!important;font-size:14px!important}
+}
+
+/* 1.44: Större och tydligare antal marker i telefonvyn. */
+@media (max-width:699px), (orientation:landscape) and (max-height:600px) and (max-width:1000px){
+ .ring-seats .seat .st{font-size:clamp(15px,3.7vw,21px)!important;font-weight:900!important;line-height:1.2;color:#ffe077;opacity:1}
+}
+
 /* Den som senast höjde har en tydlig lila bakgrund vid sina kort. */
 .ring-seats .seat.raiser{background:#512467!important;border-color:#ed8cff!important;box-shadow:0 0 0 2px #b956e8,0 0 18px #ba5bf6aa!important;z-index:5}
 .ring-seats .seat.raiser .cards{background:#74318c;border-radius:8px;padding:4px 2px}
@@ -322,7 +355,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.42</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.44</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -337,7 +370,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </div>
 <script>
 (()=>{
-const MAXR=50,SB=2,BB=4,START=1000,DELAY=1000,NEXT=20000;
+const MAXR=50,SB=2,BB=4,START=1000,DELAY=1000,NEXT=30000;
 const SU=['♠','♥','♦','♣'],RK={11:'J',12:'Q',13:'K',14:'A'};
 const rk=r=>RK[r]||String(r);
 const HN=['Högt kort','Ett par','Två par','Tretal','Stege','Färg','Kåk','Fyrtal','Straight flush'];
@@ -814,7 +847,7 @@ function badges(i,v){return (v.hand?(i===v.dealer?'<span class="badge dealer-bad
 function seat(i,v){
   const p=v.players[i];
   return `<div data-player="${i}" class="seat ${v.dealerPreview&&i===v.dealer?'dealer-spotlight':''} ${v.dealerPreview&&v.dealerFrom>=0&&i===v.dealer?'dealer-moving':''} ${v.over&&v.winners?.includes(i)?'winner':''} ${v.toAct===i&&!v.over&&!v.dealing?'turn turn-flash':''} ${v.lastRaiser===i&&!v.over&&!p.folded?'raiser':''} ${p.folded&&!p.out?'fold':''} ${p.out?'out':''}">
-   <div class="nm">${esc(p.name)}${badges(i,v)}</div><div class="st">${p.out?'Ute':p.stack+' marker'}</div>
+   <div class="nm">${esc(p.name)}${badges(i,v)}</div><div class="st">${p.out?'Ute':p.stack+' m'}</div>
    <div class="cards">${p.out?'':p.cards.slice(0,v.dealerPreview?0:(dealRevealHand===v.hand?dealSequence.slice(0,dealRevealed).filter(x=>x===i).length:p.cards.length)).map(cardEl).join('')}</div>
    ${v.over?'':chips(p.bet)}<div class="act">${v.over?'':(p.bet?'Insats '+p.bet:'')+(p.bet&&p.last?' · ':'')+p.last}</div>
    ${i===v.you?`<div class="mobile-seat-status" aria-live="polite">${esc(v.msg||(v.toAct===v.you&&!v.over&&!v.dealing?'Din tur':(!v.over&&!v.dealing&&v.who?v.who+'s tur':'')))}</div>`:''}</div>`;

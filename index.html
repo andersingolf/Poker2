@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.51</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.51">
-<meta name="application-name" content="♠ Ingolf-Poker 1.51">
+<title>♠ Ingolf-Poker 1.52</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.52">
+<meta name="application-name" content="♠ Ingolf-Poker 1.52">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -411,7 +411,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 </style></head><body>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.51</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.52</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -670,7 +670,11 @@ function score5(c){
     const pairs=groups.filter(g=>g.n===2).map(g=>g.r).sort((a,b)=>b-a);
     rank=[...pairs,groups.find(g=>g.n===1).r];
   }
-  else if(groups[0].n===2){cat=1;rank=[groups[0].r,...groups.slice(1).map(g=>g.r).sort((a,b)=>b-a)]}
+  else if(groups[0].n===2){
+    // Vid samma par avgör först högsta sidokortet (kicker), sedan nästa och tredje.
+    const kickers=groups.filter(g=>g.n===1).map(g=>g.r).sort((a,b)=>b-a);
+    cat=1;rank=[groups[0].r,...kickers];
+  }
   else {cat=0;rank=rs}
   let score=cat;
   for(let i=0;i<5;i++)score=score*15+(rank[i]||0);

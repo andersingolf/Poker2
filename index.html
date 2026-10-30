@@ -2,9 +2,9 @@
 <html lang="sv"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>♠ Ingolf-Poker 1.50</title>
-<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.50">
-<meta name="application-name" content="♠ Ingolf-Poker 1.50">
+<title>♠ Ingolf-Poker 1.51</title>
+<meta name="apple-mobile-web-app-title" content="♠ Ingolf-Poker 1.51">
+<meta name="application-name" content="♠ Ingolf-Poker 1.51">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -389,31 +389,29 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
  .game-sidebar button.q{min-height:26px;font-size:11px;padding:3px}
  .game-sidebar .log{max-height:34px;font-size:10px;padding:2px 4px}
 }
-/* 1.47: Utnyttja hela skärmytan när telefonen hålls liggande. */
+/* 1.51: Stabil liggande iPhone-vy. Undvik 100dvh/flex-omflöde och
+   Fullscreen API som kan orsaka att Safari/hemskärmsappen laddar om vyn
+   vid rotation. Använd en vanlig rullbar sida med fast bordshöjd. */
 @media (orientation:landscape) and (max-height:600px) and (max-width:1000px){
- html,body{width:100%;min-height:100%;margin:0}
- body{min-height:0;display:block}
- #app{width:100%;max-width:none;min-height:100dvh;padding:env(safe-area-inset-top,2px) env(safe-area-inset-right,5px) env(safe-area-inset-bottom,3px) env(safe-area-inset-left,5px);gap:2px}
- #game:not(.hide){flex:1;min-height:0;gap:2px!important}
- #game>.table{flex:1;min-height:0}
- .poker-ring{flex:1;height:auto!important;min-height:0!important;max-height:none!important}
- #game .result-banner{min-height:0;padding:2px 5px;margin:0;font-size:12px;line-height:1.1}
- .game-sidebar{flex:0 0 auto;min-height:0!important;max-height:33vh;overflow:auto}
+ html,body{min-height:100%;height:auto;overflow-x:hidden}
+ body{display:block}
+ #app{width:100%;max-width:none;min-height:0;height:auto;padding:3px 7px 8px;gap:3px}
+ #game:not(.hide){display:flex!important;flex-direction:column!important;gap:3px!important;min-height:0}
+ #game>.table{flex:none;min-height:0;width:100%}
+ .poker-ring{flex:none!important;height:clamp(270px,72vh,390px)!important;min-height:270px!important;max-height:none!important}
+ .game-sidebar{flex:none;min-height:0;max-height:none;overflow:visible}
  .game-sidebar .log{display:none}
  #soundToggle{display:none}
- #fullscreenToggle{display:block;position:fixed;top:3px;right:calc(5px + env(safe-area-inset-right,0px));z-index:1000;min-height:0;padding:4px 7px;font-size:11px;border-radius:6px;flex:none;background:#1b5038;color:white}
- :fullscreen #fullscreenToggle{display:none}
 }
-#fullscreenToggle{display:none}
+#fullscreenToggle{display:none!important}
 /* 1.49: Dölj enbart dekorativa marker ovanför satsningsknappen på mobil. */
 @media (max-width:699px), (orientation:landscape) and (max-height:600px) and (max-width:1000px){
  #rch .chips{display:none!important}
 }
 </style></head><body>
-<button id="fullscreenToggle" type="button" aria-label="Visa i helskärm">⛶ Helskärm</button>
 <button id="soundToggle" type="button" aria-label="Aktivera och testa ljud">🔇 Aktivera ljud</button>
 <div id="app">
- <h1><span>♠ Ingolf-Poker <span class="version">1.50</span></span><small id="info"></small></h1>
+ <h1><span>♠ Ingolf-Poker <span class="version">1.51</span></span><small id="info"></small></h1>
  <div id="lobby" class="panel"></div>
  <div id="game" class="hide">
   <div class="table">
@@ -430,14 +428,7 @@ h1 .version{font-size:.72em;font-weight:500;opacity:.8;margin-left:5px;white-spa
 (()=>{
 const MAXR=50,SB=2,BB=4,START=1000,DELAY=1000,NEXT=30000;
 const $=id=>document.getElementById(id);
-// Helskärms-API kräver ett aktivt knapptryck. iPhone Safari kan neka API:t;
-// då används den kant-till-kant-anpassade vyn ovan (hemskärmsapp ger bäst resultat).
-$('fullscreenToggle').addEventListener('click',async()=>{
-  try{
-    if(document.fullscreenElement) await document.exitFullscreen();
-    else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-  }catch(_){ /* Safari på iPhone stöder inte alltid webbsidors helskärms-API. */ }
-});
+// Ingen automatisk helskärmsväxling vid rotation: behåll samma spelinstans.
 const SU=['♠','♥','♦','♣'],RK={11:'J',12:'Q',13:'K',14:'A'};
 const rk=r=>RK[r]||String(r);
 const HN=['Högt kort','Ett par','Två par','Tretal','Stege','Färg','Kåk','Fyrtal','Straight flush'];
